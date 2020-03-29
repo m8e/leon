@@ -7,7 +7,7 @@ import packages.trend.github_lang as github_lang
 from re import search, escape
 from bs4 import BeautifulSoup
 
-def github(string, entities):
+def run(string, entities):
 	"""Grab the GitHub trends"""
 	
 	# Number of repositories
@@ -57,18 +57,26 @@ def github(string, entities):
 	try:
 		r = utils.http('GET', 'https://github.com/trending/' + techslug + '?since=' + since)
 		soup = BeautifulSoup(r.text, features='html.parser')
-		elements = soup.select('.repo-list li', limit=limit)
+		elements = soup.select('article.Box-row', limit=limit)
 		result = ''
 
 		for i, element in enumerate(elements):
-			repository = element.h3.get_text(strip=True).replace(' ', '')
-			author = element.img.get('alt')[1:]
-			stars = element.select('span.d-inline-block.float-sm-right')[0].get_text(strip=True).split(' ')[0]
-			separators = [' ', ',', '.']
+			repository = element.h1.get_text(strip=True).replace(' ', '')
+			if (element.img != None):
+				author = element.img.get('alt')[1:]
+			else:
+				author = '?'
 
-			# Replace potential separators number
-			for j, separator in enumerate(separators):
-				stars = stars.replace(separator, '')
+			hasstars = element.select('span.d-inline-block.float-sm-right')
+			stars = 0
+
+			if hasstars:
+				stars = element.select('span.d-inline-block.float-sm-right')[0].get_text(strip=True).split(' ')[0]
+				separators = [' ', ',', '.']
+
+				# Replace potential separators number
+				for j, separator in enumerate(separators):
+					stars = stars.replace(separator, '')
 
 			result += utils.translate('list_element', {
 						'rank': i + 1,
